@@ -1,4 +1,4 @@
-package com.example.lufei.retrofitsample;
+package com.example.lufei.retrofitsample.request;
 
 import com.baiwanlu.android.retrofit.BaseRequest;
 import com.baiwanlu.android.retrofit.CallBack;
