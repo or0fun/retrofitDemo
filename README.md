@@ -1,6 +1,6 @@
 # retrofitDemo
 
-  RetrofitManager
+      RetrofitManager
                 .get("http://ip.taobao.com")
                 .create(IPRequest.class)
                 .getIPInfo("111.32.23.2")
