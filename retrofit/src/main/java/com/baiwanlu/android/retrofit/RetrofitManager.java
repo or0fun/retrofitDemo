@@ -2,6 +2,7 @@ package com.baiwanlu.android.retrofit;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -16,10 +17,16 @@ public class RetrofitManager {
 
     static boolean sLogEnable = false;
 
+    static int sTimeout = 300;
+
     static Map<String, Retrofit> retrofitStringMap = new HashMap<>();
 
-    public static void init(boolean logEnable) {
+    public static void setLogEnable(boolean logEnable) {
         sLogEnable = logEnable;
+    }
+
+    public static void setTimeout(int timeout) {
+        sTimeout = timeout;
     }
 
     public static Retrofit get(String baseUrl) {
@@ -30,16 +37,19 @@ public class RetrofitManager {
 
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-        OkHttpClient httpClient = new OkHttpClient.Builder().addInterceptor(logging).build();
+        OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder();
+
+        httpClientBuilder.connectTimeout(sTimeout, TimeUnit.SECONDS);
+        if (sLogEnable) {
+            httpClientBuilder.addInterceptor(logging);
+        }
 
         Retrofit.Builder builder =  new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create())
-                .addCallAdapterFactory(RxJavaCallAdapterFactory.create());
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .client(httpClientBuilder.build());
 
-        if (sLogEnable) {
-            builder.client(httpClient);
-        }
 
         Retrofit retrofit = builder.build();
         retrofitStringMap.put(baseUrl, retrofit);
