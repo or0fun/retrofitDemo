@@ -1,10 +1,15 @@
 package com.baiwanlu.android.retrofit;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
@@ -18,6 +23,8 @@ public class RetrofitManager {
     static boolean sLogEnable = false;
 
     static int sTimeout = 300;
+
+    static Interceptor commonQueryParameterInterceptor;
 
     static Map<String, Retrofit> retrofitStringMap = new HashMap<>();
 
@@ -43,6 +50,9 @@ public class RetrofitManager {
         if (sLogEnable) {
             httpClientBuilder.addInterceptor(logging);
         }
+        if (null != commonQueryParameterInterceptor) {
+            httpClientBuilder.addInterceptor(commonQueryParameterInterceptor);
+        }
 
         Retrofit.Builder builder =  new Retrofit.Builder()
                 .baseUrl(baseUrl)
@@ -55,5 +65,25 @@ public class RetrofitManager {
         retrofitStringMap.put(baseUrl, retrofit);
 
         return retrofit;
+    }
+
+    /**
+     * 设置公共参数
+     */
+    private static void addQueryParameterInterceptor(final Map<String, String> params) {
+        commonQueryParameterInterceptor = new Interceptor() {
+            @Override
+            public Response intercept(Chain chain) throws IOException {
+                Request originalRequest = chain.request();
+                Request request;
+                HttpUrl.Builder modifiedUrlBuilder = originalRequest.url().newBuilder();
+
+                for(Map.Entry<String, String> entry : params.entrySet()){
+                    modifiedUrlBuilder.addQueryParameter(entry.getKey(), entry.getValue());
+                }
+                request = originalRequest.newBuilder().url(modifiedUrlBuilder.build()).build();
+                return chain.proceed(request);
+            }
+        };
     }
 }
